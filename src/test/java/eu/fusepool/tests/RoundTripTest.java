@@ -91,7 +91,7 @@ public class RoundTripTest extends BaseTest {
         i = 0;
         while (true) {
             if (i++ == 150) {
-                throw new RuntimeException("Did not found triples in ECS result even after more than one minute");
+                throw new RuntimeException("Did not found triples in ECS result even after several one minute");
             }
             //now ecs should find some data
             final Response ecsResponse = RestAssured.given()
@@ -107,7 +107,11 @@ public class RoundTripTest extends BaseTest {
                 break;
             }
             try {
-                Thread.sleep(400);
+                if (i > 100) {
+                    Thread.sleep(4000);
+                } else {
+                    Thread.sleep(400);
+                }
             } catch (InterruptedException ex) {
                 Thread.currentThread().interrupt();
             }
