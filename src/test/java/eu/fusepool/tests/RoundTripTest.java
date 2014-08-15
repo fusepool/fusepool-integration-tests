@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package eu.fusepool.tests;
 
 import com.jayway.restassured.RestAssured;
@@ -36,18 +35,18 @@ import org.junit.Test;
  * @author reto
  */
 public class RoundTripTest extends BaseTest {
-    
+
     @Test
     public void fromDlcToEcs() {
-        final String dataSetLabel = "test"+(Math.round(Math.random()*10000));
+        final String dataSetLabel = "test" + (Math.round(Math.random() * 10000));
         //Create DataSet
         RestAssured.given()
                 .auth().basic("admin", "admin").formParam("pipe_label", dataSetLabel)
                 .redirects().follow(false).expect().statusCode(HttpStatus.SC_SEE_OTHER).when()
                 .post("/sourcing/create_pipe");
         //ISSUE: the above doesn't return the name of the created dataset
-        final String dataSetName="urn:x-localinstance:/dlc/"+dataSetLabel;
-        
+        final String dataSetName = "urn:x-localinstance:/dlc/" + dataSetLabel;
+
         //Start batch processing
         final Response processBatchResponse = RestAssured.given()
                 .redirects().follow(false)
@@ -64,14 +63,14 @@ public class RoundTripTest extends BaseTest {
                 .expect().statusCode(HttpStatus.SC_SEE_OTHER).when()
                 .post("/sourcing/processBatch/");
         //ISSUE: the task is started without checking if the dataset and interlinker exists
-        
+
         final String taskLocation = processBatchResponse.getHeader("Location");
-        
+
         //Making sure the tasks ends after a while
         int i = 0;
         while (true) {
             if (i++ == 120) {
-                throw new RuntimeException("Did not end after two minutes: "+taskLocation);
+                throw new RuntimeException("Did not end after two minutes: " + taskLocation);
             }
             try {
                 Thread.sleep(1000);
@@ -85,29 +84,39 @@ public class RoundTripTest extends BaseTest {
                     .get(taskLocation);
             if (taskResponse.getBody().asString().contains("ended")) {
                 break;
-            } 
+            }
         }
-        //wait a sec for the index to accept the changes
-        try {
-            Thread.sleep(1000);
-        } catch (InterruptedException ex) {
-            Thread.currentThread().interrupt();
+        //it may take a while till the data is reindex and available in ECS
+        Graph graph;
+        i = 0;
+        while (true) {
+            if (i++ == 150) {
+                throw new RuntimeException("Did not found triples in ECS result even after more than 15 seconds");
+            }
+            //now ecs should find some data
+            final Response ecsResponse = RestAssured.given()
+                    .header("Accept", "text/turtle")
+                    .queryParam("search", "*")
+                    .expect().statusCode(HttpStatus.SC_OK)
+                    .header("Content-Type", "text/turtle").when()
+                    .get("/ecs/");
+            graph = Parser.getInstance().parse(
+                    new ByteArrayInputStream(ecsResponse.asByteArray()),
+                    SupportedFormat.TURTLE);
+            if (graph.size() > 10) {
+                break;
+            }
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException ex) {
+                Thread.currentThread().interrupt();
+            }
         }
-        //now ecs should find some data
-        final Response ecsResponse = RestAssured.given()
-                .header("Accept", "text/turtle")
-                .queryParam("search", "*")
-                .expect().statusCode(HttpStatus.SC_OK)
-                .header("Content-Type", "text/turtle").when()
-                .get("/ecs/");
-        final Graph graph = Parser.getInstance().parse(
-                new ByteArrayInputStream(ecsResponse.asByteArray()), 
-                SupportedFormat.TURTLE);
-        Assert.assertTrue("The graph returned by ecs seems too small (only "+graph.size()+" triples)", graph.size() > 10);
+        //Assert.assertTrue("The graph returned by ecs seems too small (only " + graph.size() + " triples)", graph.size() > 10);
         GraphNode storeViewType = new GraphNode(ECS.ContentStoreView, graph);
         GraphNode storeView = storeViewType.getSubjectNodes(RDF.type).next();
         Literal contentsCount = storeView.getLiterals(ECS.contentsCount).next();
-        Assert.assertTrue("No content found.",Integer.parseInt(contentsCount.getLexicalForm()) > 0);
+        Assert.assertTrue("No content found.", Integer.parseInt(contentsCount.getLexicalForm()) > 0);
     }
-    
+
 }
