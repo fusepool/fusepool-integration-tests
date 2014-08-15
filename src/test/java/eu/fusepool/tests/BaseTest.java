@@ -177,6 +177,12 @@ public abstract class BaseTest {
                 }
             }
             log.info("Got expected content for all configured requests, server is ready");
+            //Some additional wait time, as not everything can be tested with the paths
+            try {
+                Thread.sleep(5000);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
             serverReady = true;
         }
 
