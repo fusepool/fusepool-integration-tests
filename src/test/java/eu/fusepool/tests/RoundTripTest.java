@@ -29,12 +29,16 @@ import org.apache.http.HttpStatus;
 import static org.hamcrest.Matchers.*;
 import org.junit.Assert;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
  * @author reto
  */
 public class RoundTripTest extends BaseTest {
+    
+    final static Logger log = LoggerFactory.getLogger(RoundTripTest.class);
 
     @Test
     public void fromDlcToEcs() {
@@ -103,16 +107,19 @@ public class RoundTripTest extends BaseTest {
             if (graph.size() > 10) {
                 break;
             }
-            if (i++ == 158) {
+            if (i == 150) {
+                log.warn("Did not find triples in ECS after 4 minutes! Now triggering reindexing via HTTP call.");
+                RestAssured.given()
+                .auth().basic("admin", "admin")
+                .expect().statusCode(HttpStatus.SC_OK).when()
+                .get("/ecs/reindex");
+            }
+            if (i++ == 190) {
                 throw new RuntimeException("Did not found triples in ECS result even after 8 minute");
             }
             try {
                 if (i >= 100) {
-                    if (i >= 150) {
-                        Thread.sleep(30000);
-                    } else {
-                        Thread.sleep(4000);
-                    }
+                    Thread.sleep(4000);
                 } else {
                     Thread.sleep(400);
                 }
