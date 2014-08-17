@@ -158,13 +158,17 @@ public abstract class BaseTest {
                             continue readyLoop;
                         }
                         final String content = EntityUtils.toString(entity);
-                        if (!content.contains(substring)) {
+                        final boolean checkAbsence = substring.startsWith("!");
+                        final String notPresentString = substring.substring(1);
+                        if ((!checkAbsence && content.contains(substring)) || 
+                                (checkAbsence && content.contains(notPresentString))) {
+                            log.debug("Returned content for {}  contains {} - ready", 
+                                url, substring);
+                        } else {
                             log.info("Returned content for {}  does not contain " 
                                     + "{} - will retry", url, substring);
                             continue readyLoop;
-                        } else {
-                            log.debug("Returned content for {}  contains {} - ready", 
-                                url, substring);
+                            
                         }
                     }
                 } catch (ConnectException e) {

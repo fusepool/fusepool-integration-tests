@@ -90,9 +90,6 @@ public class RoundTripTest extends BaseTest {
         Graph graph;
         i = 0;
         while (true) {
-            if (i++ == 150) {
-                throw new RuntimeException("Did not found triples in ECS result even after several one minute");
-            }
             //now ecs should find some data
             final Response ecsResponse = RestAssured.given()
                     .header("Accept", "text/turtle")
@@ -106,9 +103,16 @@ public class RoundTripTest extends BaseTest {
             if (graph.size() > 10) {
                 break;
             }
+            if (i++ == 158) {
+                throw new RuntimeException("Did not found triples in ECS result even after 8 minute");
+            }
             try {
-                if (i > 100) {
-                    Thread.sleep(4000);
+                if (i >= 100) {
+                    if (i >= 150) {
+                        Thread.sleep(30000);
+                    } else {
+                        Thread.sleep(4000);
+                    }
                 } else {
                     Thread.sleep(400);
                 }
