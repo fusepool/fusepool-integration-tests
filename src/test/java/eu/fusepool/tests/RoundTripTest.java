@@ -111,11 +111,12 @@ public class RoundTripTest extends BaseTest {
                 log.warn("Did not find triples in ECS after 4 minutes! Now triggering reindexing via HTTP call.");
                 RestAssured.given()
                 .auth().basic("admin", "admin")
-                .expect().statusCode(HttpStatus.SC_OK).when()
+                .expect().statusCode(HttpStatus.SC_OK)
+                .body(containsString("indexed")).when()
                 .get("/ecs/reindex");
             }
             if (i++ == 190) {
-                throw new RuntimeException("Did not found triples in ECS result even after 8 minute");
+                throw new RuntimeException("Did not find triples in ECS result even after 8 minute");
             }
             try {
                 if (i >= 100) {
