@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<actions>
+        <action>
+            <actionName>CUSTOM-debug instance</actionName>
+            <displayName>debug instance</displayName>
+            <goals>
+                <goal>test</goal>
+            </goals>
+            <properties>
+                <jar.executor.vm.options>-Xmx1g -XX:MaxPermSize=256m -Dorg.apache.stanbol.offline.mode=true -Xdebug -Xnoagent -Xrunjdwp:transport=dt_socket,address=8888,server=y,suspend=y</jar.executor.vm.options>
+            </properties>
+        </action>
+    </actions>

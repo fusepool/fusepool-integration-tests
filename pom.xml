@@ -50,6 +50,7 @@
         <!-- <test.server.url>http://localhost:8080/</test.server.url> -->
 
         <!-- Options for the VM that executes our runnable jar -->
+        <!-- add the following to debug instance under test: -Xdebug -Xnoagent -Xrunjdwp:transport=dt_socket,address=8888,server=y,suspend=y -->
         <jar.executor.vm.options>-Xmx1g -XX:MaxPermSize=256m -Dorg.apache.stanbol.offline.mode=true</jar.executor.vm.options>
 
         <!-- Set this to true to keep the runnable jar running - useful to debug tests -->

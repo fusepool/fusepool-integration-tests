@@ -16,6 +16,8 @@
 
 package eu.fusepool.tests;
 
+import com.jayway.restassured.RestAssured;
+import java.io.File;
 import java.net.ConnectException;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,7 +28,6 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
 import org.apache.stanbol.commons.testing.jarexec.JarExecutor;
-import com.jayway.restassured.RestAssured;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.slf4j.Logger;
@@ -48,6 +49,15 @@ public abstract class BaseTest {
 
     private static final Logger log = LoggerFactory.getLogger(BaseTest.class);
 
+    private static void delete(File file) {
+        if (file.isDirectory()) {
+            for (File child: file.listFiles()) {
+                delete(child);
+            }
+        }
+        file.delete();
+    }
+
     protected boolean serverReady = false;
     //protected RequestBuilder builder;
     protected DefaultHttpClient httpClient = new DefaultHttpClient();
@@ -64,6 +74,10 @@ public abstract class BaseTest {
             serverBaseUrl = configuredUrl;
             log.info(TEST_SERVER_URL_PROP + " is set: not starting server jar (" + serverBaseUrl + ")");
         } else {
+            final File workingDir = new File(System.getProperty(JarExecutor.PROP_WORKING_DIRECTORY));
+            if (workingDir.exists()) {
+               delete(workingDir);
+            }
             final JarExecutor j = JarExecutor.getInstance(System.getProperties());
             j.start();
             serverBaseUrl = "http://localhost:" + j.getServerPort();
