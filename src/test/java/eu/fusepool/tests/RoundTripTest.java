@@ -50,7 +50,12 @@ public class RoundTripTest extends BaseTest {
                 .post("/sourcing/create_pipe");
         //ISSUE: the above doesn't return the name of the created dataset
         final String dataSetName = "urn:x-localinstance:/dlc/" + dataSetLabel;
-
+        
+        RestAssured.given()
+                .auth().basic("admin", "admin")
+                .expect().body(containsString(INTERLINKER_NAME))
+                .when().get("/sourcing/");
+        
         //Start batch processing
         final Response processBatchResponse = RestAssured.given()
                 .redirects().follow(false)
@@ -58,7 +63,7 @@ public class RoundTripTest extends BaseTest {
                 .formParam("dataSet", dataSetName)
                 .formParam("rdfizer", "patent")
                 .formParam("digester", "patent")
-                .formParam("interlinker", "silk-patents")
+                .formParam("interlinker", INTERLINKER_NAME)
                 .formParam("skipPreviouslyAdded", "on")
                 .formParam("smushAndPublish", "on")
                 .formParam("recurse", "on")
@@ -134,5 +139,6 @@ public class RoundTripTest extends BaseTest {
         Literal contentsCount = storeView.getLiterals(ECS.contentsCount).next();
         Assert.assertTrue("No content found.", Integer.parseInt(contentsCount.getLexicalForm()) > 0);
     }
+    public static final String INTERLINKER_NAME = "silk-patents";
 
 }
