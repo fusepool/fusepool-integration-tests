@@ -22,12 +22,14 @@ import java.net.ConnectException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TreeSet;
+import java.util.logging.Level;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
 import org.apache.stanbol.commons.testing.jarexec.JarExecutor;
+import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.slf4j.Logger;
@@ -83,17 +85,26 @@ public abstract class BaseTest {
             serverBaseUrl = "http://localhost:" + j.getServerPort();
             log.info("Forked subprocess server listening to: " + serverBaseUrl);
 
-            // Optionally block here so that the runnable jar stays up - we can
-            // then run tests against it from another VM
-            if ("true".equals(System.getProperty(KEEP_JAR_RUNNING_PROP))) {
-                log.info(KEEP_JAR_RUNNING_PROP + " set to true - entering infinite loop"
-                        + " so that runnable jar stays up. Kill this process to exit.");
-                while (true) {
+            
+        }
+        RestAssured.baseURI = serverBaseUrl;
+    }
+    
+    @AfterClass
+    public static void afterClass() {
+        // Optionally block here so that the runnable jar stays up - we can
+        // then run tests against it from another VM
+        if ("true".equals(System.getProperty(KEEP_JAR_RUNNING_PROP))) {
+            log.info(KEEP_JAR_RUNNING_PROP + " set to true - entering infinite loop"
+                    + " so that runnable jar stays up. Kill this process to exit.");
+            while (true) {
+                try {
                     Thread.sleep(1000L);
+                } catch (InterruptedException ex) {
+                    Thread.currentThread().interrupt();
                 }
             }
         }
-        RestAssured.baseURI = serverBaseUrl;
     }
 
     @Before
